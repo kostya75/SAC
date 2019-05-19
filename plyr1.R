@@ -48,16 +48,24 @@ for (z in 1:72){
 osonedf<-as.data.frame(osonedf)
 osonedf[]<-lapply(osonedf,as.character)
 osonedf[]<-lapply(osonedf,as.numeric)
+osonedf$month<-ordered(osonedf$month)
 
 
 #split
 locs<-with(osonedf,list(osonedf$long,osonedf$lat))
 pieces<-split(osonedf,locs)
 #create func
-deseasef_df<-function(df) { rle(value~month-1,data=df)}
+deseasef_df<-function(df) { 
+  rlm(value~month-1, data=df)
+}
+
+
 models<-lapply(pieces, deseasef_df)
-deseas_base<-mapply(function(model,df){ cbind(df[rep(1, 72), c("lat", "long")],resid(model))},models,pieces)
-tt<-do.call("rbind",deseas_base)
+results<-Map(function(model,df) { 
+  data.frame(df,deseas=resid(model))}
+  #cbind(df[rep(1, 72), c("lat", "long")], resid(model))}
+  ,models,pieces)
+
+deseasdf<-do.call("rbind",results)
 
 
-lapply(models,function(model) resid(model))
